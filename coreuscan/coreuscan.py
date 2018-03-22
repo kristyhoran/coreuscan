@@ -1,8 +1,4 @@
-import requests, argparse, sys, os, json, urllib3, bs4, ast,re, subprocess, urllib.request, gzip, wget
-from io import StringIO
-from requests.auth import HTTPBasicAuth
-
-import logging
+import requests, argparse, os, bs4, ast,gzip, wget, logging
 
 logger = logging.getLogger('pubMLST')
 
