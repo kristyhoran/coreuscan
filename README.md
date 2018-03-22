@@ -1,4 +1,4 @@
-=========
+
 CoreuScan
 =========
 **A tool to download Core Genome MLST schemes for bacterial genomics**
