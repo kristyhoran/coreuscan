@@ -249,7 +249,7 @@ def get_Pasteur():
             species_dict_mlst.append(([p], PRE_URL + p + SUF_URL, allele_dict_mlst))
         except requests.exceptions.HTTPError as err:
             print(err)
-            sys.exit(1)
+            # sys.exit(1)
 
     cache(location='pasteur', type='cg', species_dict=species_dict_cg)
 
