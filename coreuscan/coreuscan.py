@@ -1,4 +1,4 @@
-import requests, argparse, os, bs4, ast,gzip, wget, logging
+import requests, requests.exceptions, argparse, os, bs4, ast,gzip, wget, logging, sys
 
 logger = logging.getLogger('pubMLST')
 
@@ -83,18 +83,22 @@ def compare_schema(path, loci, new):
 def get_cgMLST():
 
     define_cache('cg')
-
-    r = requests.get(CGMLST_URL)
-    print('Requesting data cgMLST @ www.cgmlst.org/ncs/')
-    soup = bs4.BeautifulSoup(r.text, 'html.parser')
-    species_dict = []
-    # retrieve species and url
-    for s in soup.table.find_all('a'):
-        sp = str(s.contents[0])
-        sp = sp.strip('</em>')
-        # print(sp)
-        # print('Accessing ' + sp + ' schemes......')
-        species_dict.append(([sp],s.get('href') + 'alleles/'))
+    try:
+        r = requests.get(CGMLST_URL)
+        r.raise_for_status()
+        print('Requesting data cgMLST @ www.cgmlst.org/ncs/')
+        soup = bs4.BeautifulSoup(r.text, 'html.parser')
+        species_dict = []
+        # retrieve species and url
+        for s in soup.table.find_all('a'):
+            sp = str(s.contents[0])
+            sp = sp.strip('</em>')
+            # print(sp)
+            # print('Accessing ' + sp + ' schemes......')
+            species_dict.append(([sp],s.get('href') + 'alleles/'))
+    except requests.exceptions.HTTPError as err:
+        print(err)
+        sys.exit(1)
     # save the available schemes
     cache(location='cgmlst', type = 'cg',species_dict= species_dict)
 
@@ -107,29 +111,33 @@ def get_Oxford():
     species_dict = []
     url_mid = '/db/pubmlst_'
     url_end = '_seqdef/loci'
-    r_mlst_oxford = requests.get(OXFORD_URL)
-    r_mlst_oxford_json = r_mlst_oxford.json()
-    # step through response to get species name and url
-    for i in range(len(r_mlst_oxford_json)):
-        for j in range(len(r_mlst_oxford_json[i]['databases'])):
+    try:
+        r_mlst_oxford = requests.get(OXFORD_URL)
+        r_mlst_oxford.raise_for_status()
+        r_mlst_oxford_json = r_mlst_oxford.json()
+        # step through response to get species name and url
+        for i in range(len(r_mlst_oxford_json)):
+            for j in range(len(r_mlst_oxford_json[i]['databases'])):
 
-            if 'sequence' in r_mlst_oxford_json[i]['databases'][j]['description']:
-                s = str(r_mlst_oxford_json[i]['databases'][j]['href'])[35:-7]
-                # print('Accessing '+ s +' schemes......')
-                new_url = r_mlst_oxford_json[i]['databases'][j]['href'] + '/loci'
-                r = requests.get(new_url)
-                if 'loci' in r.json():
+                if 'sequence' in r_mlst_oxford_json[i]['databases'][j]['description']:
+                    s = str(r_mlst_oxford_json[i]['databases'][j]['href'])[35:-7]
+                    # print('Accessing '+ s +' schemes......')
+                    new_url = r_mlst_oxford_json[i]['databases'][j]['href'] + '/loci'
+                    r = requests.get(new_url)
+                    if 'loci' in r.json():
 
-                    loci_list = r.json()['loci']
-                    # TODO which of the mulitple schemes are the best , abaummani, leptospira, pmultocida
-                    # if 'abaumannii' == s:
-                    #     # print(loci_list)
-                    #     for i in loci_list:
-                    #         if 'Oxf' in i:
-                    #             print(i)
-                    species_dict.append(([s], str(r_mlst_oxford_json[i]['databases'][j]['href']), loci_list))
-    # save the available schemes
-
+                        loci_list = r.json()['loci']
+                        # TODO which of the mulitple schemes are the best , abaummani, leptospira, pmultocida
+                        # if 'abaumannii' == s:
+                        #     # print(loci_list)
+                        #     for i in loci_list:
+                        #         if 'Oxf' in i:
+                        #             print(i)
+                        species_dict.append(([s], str(r_mlst_oxford_json[i]['databases'][j]['href']), loci_list))
+        # save the available schemes
+    except requests.exceptions.HTTPError as err:
+        print(err)
+        sys.exit(1)
     cache(location='oxford', type = 'trad',species_dict=species_dict)
 
 
@@ -139,26 +147,30 @@ def get_Warwick():
     #  get the allele address for all warwick schemes.
     print('Requesting data from Enterobase @ enterobase.warwick.ac.uk')
     def get_allele_address(url):
-        r = requests.get(url)
-        soup = bs4.BeautifulSoup(r.text, 'html.parser')
-        # print(soup.prettify())
-        allele_dict = []
-        # # retrieve species and url
-        for s in soup.find_all('a'):
-            if s.contents[0] != '../':
-                # sp is allele
-                sp = str(s.contents[0])
-                # print(sp)
-                sp = sp.strip('[]')
-                if sp.startswith('MLST'):
-                    pass
-                elif sp.startswith('profiles'):
-                    pass
-                else:
-                    allele_dict.append(sp)
-        # return a list of alleles
-        return allele_dict
-
+        try:
+            r = requests.get(url)
+            r.raise_for_status()
+            soup = bs4.BeautifulSoup(r.text, 'html.parser')
+            # print(soup.prettify())
+            allele_dict = []
+            # # retrieve species and url
+            for s in soup.find_all('a'):
+                if s.contents[0] != '../':
+                    # sp is allele
+                    sp = str(s.contents[0])
+                    # print(sp)
+                    sp = sp.strip('[]')
+                    if sp.startswith('MLST'):
+                        pass
+                    elif sp.startswith('profiles'):
+                        pass
+                    else:
+                        allele_dict.append(sp)
+            # return a list of alleles
+            return allele_dict
+        except requests.exceptions.HTTPError as err:
+            print(err)
+            sys.exit(1)
 
     scheme_dict = {'senterica': ('Salmonella.UoW/', 'SALwgMLST.cgMLSTv1/'),
                    'ecoli': ('Escherichia.UoW/', 'ESCwgMLST.cgMLSTv1/'),
@@ -212,31 +224,37 @@ def get_Pasteur():
 
     for p in PASTEUR:
         # print('Accessing ' + p + ' schemes......')
-        r = requests.get(PRE_URL + p + SUF_URL)
-        schemes = r.json()['schemes']
-        allele_dict_mlst = []
-        allele_dict_cg = []
-        # print('Accessing loci urls')
-        d = '.'
-        for s in range(len(schemes)):
-            # print(schemes[s])
-            if schemes[s]['description'].startswith('MLST'):
-                r = requests.get(schemes[s]['scheme'])
-                scheme = r.json()
-                allele_dict_mlst.append(scheme['loci'])
-            elif schemes[s]['description'].startswith('cgMLST'):
-                r = requests.get(schemes[s]['scheme'])
-                scheme = r.json()
-                allele_dict_cg.append(scheme['loci'])
-            d = d + '.'
-        # print(d)
-        species_dict_cg.append(([p], PRE_URL+p+SUF_URL, allele_dict_cg))
-        species_dict_mlst.append(([p], PRE_URL + p + SUF_URL, allele_dict_mlst))
+        try:
+            r = requests.get(PRE_URL + p + SUF_URL)
+
+            r.raise_for_status()
+            schemes = r.json()['schemes']
+            allele_dict_mlst = []
+            allele_dict_cg = []
+            # print('Accessing loci urls')
+            d = '.'
+            for s in range(len(schemes)):
+                print(schemes[s])
+                if schemes[s]['description'].startswith('MLST'):
+                    r = requests.get(schemes[s]['scheme'])
+                    scheme = r.json()
+                    allele_dict_mlst.append(scheme['loci'])
+                elif schemes[s]['description'].startswith('cgMLST'):
+                    r = requests.get(schemes[s]['scheme'])
+                    scheme = r.json()
+                    allele_dict_cg.append(scheme['loci'])
+                d = d + '.'
+            # print(d)
+            species_dict_cg.append(([p], PRE_URL+p+SUF_URL, allele_dict_cg))
+            species_dict_mlst.append(([p], PRE_URL + p + SUF_URL, allele_dict_mlst))
+        except requests.exceptions.HTTPError as err:
+            print(err)
+            sys.exit(1)
 
     cache(location='pasteur', type='cg', species_dict=species_dict_cg)
 
     cache(location='pasteur', type='trad', species_dict=species_dict_mlst)
-
+# get_Pasteur()
 
 def get_dbs(type, db):
     if type == 'cg':
@@ -358,28 +376,32 @@ def download_warwick(species,scheme_type, outpath = False, scheme_path = False, 
     open_file = open(scheme_path + 'warwick', 'r')
 
     possible_schemes = open_file.readlines()
-    for schemes in possible_schemes:
-        scheme = ast.literal_eval(schemes)
-        sp = scheme[0][0]
-        # select the species
-        if sp.lower() == species.lower():
-        # construct url for loci
-            for loci in scheme[2]:
-                url = scheme[1] + loci
-                loci_name = loci.split('.')[0]
-                # print(loci_name)
-                # download the zipped file
-                filename = url.split('/')[-1]
-                if not os.path.exists(outdir + filename):
-                    wget.download(url, out=outdir)
-                if unzip:
-                    if not os.path.exists(outdir + filename[:-3]):
-                        df = gzip.open(outdir + filename, 'rt')
-                        # print(type(df.read()))
-                        with open(outdir + filename[:-3], 'w') as of:
-                            of.write(df.read())
+    try:
+        for schemes in possible_schemes:
+            scheme = ast.literal_eval(schemes)
+            sp = scheme[0][0]
+            # select the species
+            if sp.lower() == species.lower():
+            # construct url for loci
+                for loci in scheme[2]:
+                    url = scheme[1] + loci
+                    loci_name = loci.split('.')[0]
+                    # print(loci_name)
+                    # download the zipped file
+                    filename = url.split('/')[-1]
+                    if not os.path.exists(outdir + filename):
+                        wget.download(url, out=outdir)
+                    if unzip:
+                        if not os.path.exists(outdir + filename[:-3]):
+                            df = gzip.open(outdir + filename, 'rt')
+                            # print(type(df.read()))
+                            with open(outdir + filename[:-3], 'w') as of:
+                                of.write(df.read())
 
-            print('Fasta files for ' + species + ' are located in ' + outdir)
+                print('Fasta files for ' + species + ' are located in ' + outdir)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
 
 # download_warwick(species='senterica', scheme_type='trad_schemas')
 
@@ -421,26 +443,29 @@ def download_pasteur(species,scheme_type, outpath = False, scheme_path = False, 
 
         sp = scheme[0][0]
         if sp.lower() in species.lower():
+            try:
+                for url in scheme[2][0]:
+                    loci = url.split('/')[-1]
+                    # print(loci)
+        #             # get the fasta file address using request
+                    fasta_request = requests.get(url+'/alleles_fasta')
+                    fasta_request.raise_for_status()
+                    fasta_file = fasta_request.text
+        #
+                    # only save the fasta file if it is not already there.
+                    if compare_schema(path=outdir, loci=loci, new=fasta_file):
+                        print(loci + ' has no changes.')
+                    else:
+                        with open(outdir +loci + '.fasta', 'w') as out_file:
+                            out_file.write(fasta_file)
 
-            for url in scheme[2][0]:
-                loci = url.split('/')[-1]
-                # print(loci)
-    #             # get the fasta file address using request
-                fasta_request = requests.get(url+'/alleles_fasta')
-                fasta_file = fasta_request.text
-    #
-                # only save the fasta file if it is not already there.
-                if compare_schema(path=outdir, loci=loci, new=fasta_file):
-                    print(loci + ' has no changes.')
-                else:
-                    with open(outdir +loci + '.fasta', 'w') as out_file:
-                        out_file.write(fasta_file)
-
-                    # print(loci + ' saved')
-            print('Fasta files for ' + species + ' are located in ' + outdir)
+                        # print(loci + ' saved')
+                print('Fasta files for ' + species + ' are located in ' + outdir)
     #             # break
 
-
+            except requests.exceptions.HTTPError as err:
+                print(err)
+                sys.exit(1)
 # download_pasteur(species='listeria', scheme_type='trad_schemas', outpath='pasteur_trad_scheme')
 
 def download_oxford(species, scheme_type, outpath = False, scheme_path = False, cache = True):
@@ -473,31 +498,34 @@ def download_oxford(species, scheme_type, outpath = False, scheme_path = False, 
     # get the list of pasteur schemes for schemtype
     open_file = open(scheme_path + '/oxford', 'r')
     possible_schemes = open_file.readlines()
+    try:
+        for schemes in possible_schemes:
+            scheme = ast.literal_eval(schemes)
 
-    for schemes in possible_schemes:
-        scheme = ast.literal_eval(schemes)
+            sp = scheme[0][0]
+            if sp.lower() in species.lower():
+                # print(scheme)
+                for url in scheme[2]:
+                    loci = url.split('/')[-1]
 
-        sp = scheme[0][0]
-        if sp.lower() in species.lower():
-            # print(scheme)
-            for url in scheme[2]:
-                loci = url.split('/')[-1]
+                    # get the fasta file address using request
+                    fasta_request = requests.get(url+'/alleles_fasta')
+                    fasta_request.raise_for_status()
+                    fasta_file = fasta_request.text
+                    #
+                    # print(fasta_file)
+                    # only save the fasta file if it is not already there.
+                    if compare_schema(path=outdir, loci=loci, new=fasta_file):
+                        print(loci + ' has no changes.')
+                    else:
+                        with open(outdir + '/' +loci + '.fasta', 'w') as out_file:
+                            out_file.write(fasta_file)
 
-                # get the fasta file address using request
-                fasta_request = requests.get(url+'/alleles_fasta')
-                fasta_file = fasta_request.text
-                #
-                # print(fasta_file)
-                # only save the fasta file if it is not already there.
-                if compare_schema(path=outdir, loci=loci, new=fasta_file):
-                    print(loci + ' has no changes.')
-                else:
-                    with open(outdir + '/' +loci + '.fasta', 'w') as out_file:
-                        out_file.write(fasta_file)
-
-                    # print(loci + ' saved')
-            print('Fasta files for ' + species + ' are located in ' + outdir)
-
+                        # print(loci + ' saved')
+                print('Fasta files for ' + species + ' are located in ' + outdir)
+    except requests.exceptions.HTTPError as err:
+        print(err)
+        sys.exit(1)
 # download_oxford(species='abaumannii', scheme_type='trad_schemas', outpath='oxford_trad_scheme')
 
 def download_cgmlst(species, scheme_type, outpath = False, scheme_path = False, cache = True):
@@ -532,45 +560,50 @@ def download_cgmlst(species, scheme_type, outpath = False, scheme_path = False, 
     open_file = open(scheme_path + '/cgmlst', 'r')
     possible_schemes = open_file.readlines()
     # print(possible_schemes)
+    try:
+        for schemes in possible_schemes:
+            scheme = ast.literal_eval(schemes)
 
-    for schemes in possible_schemes:
-        scheme = ast.literal_eval(schemes)
+            sp = scheme[0][0]
+            # print(sp)
+            if species.lower() in sp.lower():
 
-        sp = scheme[0][0]
-        # print(sp)
-        if species.lower() in sp.lower():
+                url = scheme[1]
+                # print(url)
+                filename = species + '.xfma.gz'
 
-            url = scheme[1]
-            # print(url)
-            filename = species + '.xfma.gz'
-
-            if not os.path.exists(outdir + '/' + filename):
-                print('Downloading scheme for ' + species)
-                wget.download(url, out = outdir + '/' + filename)
-            else:
-                print('Updating existing scheme')
-                os.remove(outdir + '/' + filename)
-                wget.download(url, out=outdir + '/' + filename)
-            # unzip and split into individual fasta files
-            xfma = gzip.open(outdir + '/' + filename, 'rt')
-            xfma_split= xfma.read().split('#')
-
-            for alleles in xfma_split[1:]:
-                loci = alleles.split()[0]
-                # print(loci)
-                # strip white space from allele and remove the '='
-                allele = alleles.strip()[:-1]
-                # print(allele)
-            #     # compare and save
-                if compare_schema(path=outdir , loci=loci, new=allele):
-                    pass
+                if not os.path.exists(outdir + '/' + filename):
+                    print('Downloading scheme for ' + species)
+                    wget.download(url, out = outdir + '/' + filename)
                 else:
-                    with open(outdir + '/' + loci + '.fasta', 'w') as out_file:
-                        out_file.write(allele)
+                    print('Updating existing scheme')
+                    os.remove(outdir + '/' + filename)
+                    wget.download(url, out=outdir + '/' + filename)
+                # unzip and split into individual fasta files
+                xfma = gzip.open(outdir + '/' + filename, 'rt')
+                xfma_split= xfma.read().split('#')
 
-                    # print(loci + ' saved')
-            print('Fasta files for ' + species + ' are located in ' + outdir)
-                # break
+                for alleles in xfma_split[1:]:
+                    loci = alleles.split()[0]
+                    # print(loci)
+                    # strip white space from allele and remove the '='
+                    allele = alleles.strip()[:-1]
+                    # print(allele)
+                #     # compare and save
+                    if compare_schema(path=outdir , loci=loci, new=allele):
+                        pass
+                    else:
+                        with open(outdir + '/' + loci + '.fasta', 'w') as out_file:
+                            out_file.write(allele)
+
+                        # print(loci + ' saved')
+                print('Fasta files for ' + species + ' are located in ' + outdir)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+
+        # break
 # download_cgmlst(species='baumannii', scheme_type='cg', outpath='cgmlst_cg_scheme' )
 
 
