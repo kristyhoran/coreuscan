@@ -172,7 +172,7 @@ def get_Warwick():
             print(err)
             sys.exit(1)
 
-    scheme_dict = {'senterica': ('Salmonella.UoW/', 'SALwgMLST.cgMLSTv1/'),
+    scheme_dict = {'salmonella': ('Salmonella.UoW/', 'Salmonella.cgMLSTv4/'),
                    'ecoli': ('Escherichia.UoW/', 'ESCwgMLST.cgMLSTv1/'),
                    'yersinia': ('Yersinia.UoW/', 'YERwgMLST.cgMLSTv1/'),
                    'moraxella': ('Moraxella.UoW/',)}
@@ -234,7 +234,7 @@ def get_Pasteur():
             # print('Accessing loci urls')
             d = '.'
             for s in range(len(schemes)):
-                print(schemes[s])
+                # print(schemes[s])
                 if schemes[s]['description'].startswith('MLST'):
                     r = requests.get(schemes[s]['scheme'])
                     scheme = r.json()
@@ -570,33 +570,17 @@ def download_cgmlst(species, scheme_type, outpath = False, scheme_path = False, 
 
                 url = scheme[1]
                 # print(url)
-                filename = species + '.xfma.gz'
+                filename = species.split()[0] + '.gz'
 
-                if not os.path.exists(outdir + '/' + filename):
+                if not os.path.exists(outdir +  filename):
                     print('Downloading scheme for ' + species)
-                    wget.download(url, out = outdir + '/' + filename)
+                    wget.download(url, out = outdir + filename, bar = None)
                 else:
                     print('Updating existing scheme')
-                    os.remove(outdir + '/' + filename)
-                    wget.download(url, out=outdir + '/' + filename)
-                # unzip and split into individual fasta files
-                xfma = gzip.open(outdir + '/' + filename, 'rt')
-                xfma_split= xfma.read().split('#')
+                    os.remove(outdir + filename)
+                    wget.download(url, out=outdir + filename, bar = None)
+                print(outdir +  filename)
 
-                for alleles in xfma_split[1:]:
-                    loci = alleles.split()[0]
-                    # print(loci)
-                    # strip white space from allele and remove the '='
-                    allele = alleles.strip()[:-1]
-                    # print(allele)
-                #     # compare and save
-                    if compare_schema(path=outdir , loci=loci, new=allele):
-                        pass
-                    else:
-                        with open(outdir + '/' + loci + '.fasta', 'w') as out_file:
-                            out_file.write(allele)
-
-                        # print(loci + ' saved')
                 print('Fasta files for ' + species + ' are located in ' + outdir)
     except Exception as e:
         print(e)
