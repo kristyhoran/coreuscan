@@ -9,5 +9,6 @@ setup(name = 'coreuscan',
       author_email= 'kristyhoran15@gmail.com',
       license= ' ',
       packages = ['coreuscan'],
-      install_requires = ['requests', 'argparse',  'bs4', 'wget', 'logging']
+      install_requires = ['requests', 'argparse',  'bs4', 'wget', 'logging'],
+      entry_points={'console_scripts': ['coreuscan = coreuscan.coreuscan:main']}
       )
