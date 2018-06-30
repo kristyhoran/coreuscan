@@ -3,7 +3,12 @@ CoreuScan
 =========
 **A tool to download Core Genome MLST schemes for bacterial genomics**
 
-    Installation and workflow to follow
+**Installation and requirements**
+
+```Requires Python 3```
+
+```pip3 install git+https://github.com/kristyhoran/coreuscan.git#egg=coreuscan```
+
 
 **Author:** Kristy Horan
 
