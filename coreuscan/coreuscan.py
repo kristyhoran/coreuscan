@@ -1,6 +1,6 @@
 import requests, requests.exceptions, argparse, os, bs4, ast,gzip, wget, sys
 
-logger = logging.getLogger('pubMLST')
+# logger = logging.getLogger('pubMLST')
 
 CGMLST_URL = 'http://www.cgmlst.org/ncs/'
 OXFORD_URL = 'http://rest.pubmlst.org'
