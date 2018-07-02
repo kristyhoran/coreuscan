@@ -1,4 +1,4 @@
-import requests, requests.exceptions, argparse, os, bs4, ast,gzip, wget, logging, sys
+import requests, requests.exceptions, argparse, os, bs4, ast,gzip, wget, sys
 
 logger = logging.getLogger('pubMLST')
 
@@ -275,7 +275,7 @@ def get_dbs(type, db):
 
 def find_db(species, type):
     # make uniform, remove punctuation and split into genus and species
-    NOT_FOUND_ERROR
+    # NOT_FOUND_ERROR
     sp = species.lower()
     print('======================================================>')
     print('Searching for ' + sp)
