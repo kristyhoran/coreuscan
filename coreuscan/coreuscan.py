@@ -1,4 +1,4 @@
-import requests, requests.exceptions, argparse, os, bs4, ast,gzip, wget, sys
+import requests, requests.exceptions, argparse, os, bs4, ast,gzip, wget, sys,subprocess
 
 # logger = logging.getLogger('pubMLST')
 
@@ -224,6 +224,7 @@ def get_Pasteur():
 
     for p in PASTEUR:
         # print('Accessing ' + p + ' schemes......')
+        # print(p)
         try:
             r = requests.get(PRE_URL + p + SUF_URL)
 
@@ -275,7 +276,7 @@ def get_dbs(type, db):
 
 def find_db(species, type):
     # make uniform, remove punctuation and split into genus and species
-    # NOT_FOUND_ERROR
+
     sp = species.lower()
     print('======================================================>')
     print('Searching for ' + sp)
@@ -345,29 +346,33 @@ def find_db(species, type):
 # find_db('listeria', 'cg')
 
 # get_Pasteur()
-def download_warwick(species,scheme_type, outpath = False, scheme_path = False, unzip = True, cache = True):
+def download_warwick(species,scheme_type, outpath = False, scheme_path =
+False, unzip = False, cache = True):
+    print(species, outpath, scheme_type)
     print('Accessing Enterobase')
-    print(os.getcwd())
+    # print(os.getcwd())
     if not outpath:
         path = os.getcwd() + '/' + species + '_schema/'
     else:
         path = outpath
     # print('outpath: ', path)
+    # print(type(path))
     if not os.path.exists(path):
         print('Making path to output files')
-        outdir = os.makedirs(path)
+        os.makedirs(path)
     else:
         print('Outdir already exists')
-        outdir = path
+    outdir = path
 
     if scheme_path:
         scheme_path = scheme_path
     else:
-        scheme_path = os.getcwd() + '/' + scheme_type + '_schemas/'
+        scheme_path = os.getcwd() + '/' + scheme_type +'_schemas/'
     # print('scheme path: ', scheme_path)
 
 
-    while not os.path.exists(scheme_path + 'warwick'):
+
+    while not os.path.exists(scheme_path + '/warwick'):
         print('Please wait while we detect available schemes')
         get_Warwick()
 
@@ -375,7 +380,7 @@ def download_warwick(species,scheme_type, outpath = False, scheme_path = False, 
 
     # get the list of warwick schemes for schemtype
 
-    open_file = open(scheme_path + 'warwick', 'r')
+    open_file = open(scheme_path + '/warwick', 'r')
 
     possible_schemes = open_file.readlines()
     try:
@@ -405,7 +410,7 @@ def download_warwick(species,scheme_type, outpath = False, scheme_path = False, 
         print(e)
         sys.exit(1)
 
-# download_warwick(species='senterica', scheme_type='trad_schemas')
+# download_warwick(species='salmonella', scheme_type='trad_schemas')
 
 def download_pasteur(species,scheme_type, outpath = False, scheme_path = False, cache = True):
 
@@ -417,18 +422,20 @@ def download_pasteur(species,scheme_type, outpath = False, scheme_path = False, 
     else:
         path = outpath
     # if it doesn't exist make it or not
-    print(path)
+    # print(path)
     if not os.path.exists(path):
-        outdir = os.makedirs(path)
+        print('Making path to output files')
+        os.makedirs(path)
     else:
-        outdir = path
+        print('Outdir already exists')
+    outdir =  path
     print(outdir)
     # open schema list
     if scheme_path:
         scheme_path = scheme_path
     else:
-        scheme_path = os.getcwd() + '/' + scheme_type + '_schemas/'
-    print(scheme_path)
+        scheme_path = os.getcwd() + '/' + scheme_type +'_schemas/'
+    # print(scheme_path)
     while not os.path.exists(scheme_path + '/pasteur'):
         print('Please wait while we detect available schemes')
         get_Pasteur()
@@ -458,7 +465,8 @@ def download_pasteur(species,scheme_type, outpath = False, scheme_path = False, 
                     if compare_schema(path=outdir, loci=loci, new=fasta_file):
                         print(loci + ' has no changes.')
                     else:
-                        with open(outdir +loci + '.fasta', 'w') as out_file:
+                        with open(outdir +'/' + loci + '.fasta', 'w') as \
+                                out_file:
                             out_file.write(fasta_file)
 
                         # print(loci + ' saved')
@@ -468,7 +476,7 @@ def download_pasteur(species,scheme_type, outpath = False, scheme_path = False, 
             except requests.exceptions.HTTPError as err:
                 print(err)
                 sys.exit(1)
-# download_pasteur(species='listeria', scheme_type='trad_schemas', outpath='pasteur_trad_scheme')
+# download_pasteur(species='listeria', scheme_type='trad_schemas')
 
 def download_oxford(species, scheme_type, outpath = False, scheme_path = False, cache = True):
 
@@ -477,7 +485,7 @@ def download_oxford(species, scheme_type, outpath = False, scheme_path = False, 
     if scheme_path:
         scheme_path = scheme_path
     else:
-        scheme_path = os.getcwd() + '/' + scheme_type + '_schemas/'
+        scheme_path = os.getcwd() + '/' + scheme_type +'_schemas/'
 
     print(scheme_path)
     while not os.path.exists(scheme_path):
@@ -490,10 +498,15 @@ def download_oxford(species, scheme_type, outpath = False, scheme_path = False, 
     else:
         path = outpath
 
+    # if it doesn't exist make it or not
+    # print(path)
     if not os.path.exists(path):
-        outdir = os.makedirs(path)
+        print('Making path to output files')
+        os.makedirs(path)
     else:
-        outdir = path
+        print('Outdir already exists')
+
+    outdir = path
     print(outdir)
     # get loci
 
@@ -528,7 +541,7 @@ def download_oxford(species, scheme_type, outpath = False, scheme_path = False, 
     except requests.exceptions.HTTPError as err:
         print(err)
         sys.exit(1)
-# download_oxford(species='abaumannii', scheme_type='trad_schemas', outpath='oxford_trad_scheme')
+# download_oxford(species='abaumannii', scheme_type='trad_schemas')
 
 def download_cgmlst(species, scheme_type, outpath = False, scheme_path = False, cache = True):
 
@@ -537,10 +550,10 @@ def download_cgmlst(species, scheme_type, outpath = False, scheme_path = False, 
     if scheme_path:
         scheme_path = scheme_path
     else:
-        scheme_path = os.getcwd() + '/' + scheme_type + '_schemas/'
+        scheme_path = os.getcwd() + '/' + scheme_type +'_schemas/'
     print(scheme_path)
 
-    while not os.path.exists(scheme_path + 'cgmlst'):
+    while not os.path.exists(scheme_path + '/cgmlst'):
         print('Please wait while we detect available schemes')
         get_cgMLST()
 
@@ -552,10 +565,15 @@ def download_cgmlst(species, scheme_type, outpath = False, scheme_path = False, 
     else:
         path = outpath
 
+    # if it doesn't exist make it or not
+    print(path)
     if not os.path.exists(path):
-        outdir = os.makedirs(path)
+        print('Making path to output files')
+        os.makedirs(path)
     else:
-        outdir = path
+        print('Outdir already exists')
+
+    outdir = path
     # print(path)
 
     # get the list of pasteur schemes for schemtype
@@ -571,26 +589,29 @@ def download_cgmlst(species, scheme_type, outpath = False, scheme_path = False, 
             if species.lower() in sp.lower():
 
                 url = scheme[1]
-                # print(url)
+                print(url)
                 filename = species.split()[0] + '.gz'
-
+                print(outdir + filename)
                 if not os.path.exists(outdir +  filename):
                     print('Downloading scheme for ' + species)
-                    wget.download(url, out = outdir + filename, bar = None)
+                    # wget.download(url, out = outdir + filename, bar = None)
+                    subprocess.run(['wget', url, '-O',outdir + filename], '-nv')
                 else:
                     print('Updating existing scheme')
                     os.remove(outdir + filename)
-                    wget.download(url, out=outdir + filename, bar = None)
-                print(outdir +  filename)
+                    # wget.download(url, out=outdir + filename, bar = None)
+                    subprocess.run(['wget', url, '-O',outdir + filename, '-nv'])
+                # print(outdir +  filename)
 
-                print('Fasta files for ' + species + ' are located in ' + outdir)
+                print('Fasta files for ' + species + ' are located in ' +
+                      outdir + filename)
     except Exception as e:
         print(e)
         sys.exit(1)
 
 
         # break
-# download_cgmlst(species='baumannii', scheme_type='cg', outpath='cgmlst_cg_scheme' )
+# download_cgmlst(species='baumannii', scheme_type='cg')
 
 
 
@@ -702,6 +723,7 @@ def main():
 
     if args.db != None:
         db = args.db
+        print(db)
     else:
         db = False
 
@@ -720,26 +742,30 @@ def main():
     # Search
     elif args.search != None:
         search = args.search
+
         if schema_type:
             find_db(species=search, type=schema_type)
         else:
             print('Please enter a schema type, available options are cg (core genome) or trad (for 7-gene MLST)')
     # download
     elif args.download:
+        print(args.download)
         # if there is a species added
         if args.species != None:
             species = args.species
-            # print(species)
+            print(species)
             # search for a the species and db
             if db == False:
                 if species == 'listeria': # set default of listeria to pasteur although it can also be downloaded from cgmlst if db = cgmlst
                     db = 'pasteur'
                 else:
                     species, db = find_db(species=species, type=schema_type)
+                    db = db[0]
 
             else:
                 species = find_db(species=species, type=schema_type)[0]
-            # print(db)
+            print(db)
+
             if args.outpath != None:
                 outpath = args.outpath
             else:
@@ -749,7 +775,7 @@ def main():
                 # print('db = pasteur')
                 download_pasteur(species=species, scheme_type = schema_type, outpath=outpath)
 
-            elif db.lower() == 'enterobase':
+            elif db.lower() == 'enterobase' or db.lower() == 'warwick':
                 download_warwick(species=species, scheme_type=schema_type, outpath=outpath)
             elif db.lower() == 'pubmlst':
                 download_oxford(species=species, scheme_type='trad', outpath=outpath)
