@@ -595,7 +595,7 @@ def download_cgmlst(species, scheme_type, outpath = False, scheme_path = False, 
                 if not os.path.exists(outdir +  filename):
                     print('Downloading scheme for ' + species)
                     # wget.download(url, out = outdir + filename, bar = None)
-                    subprocess.run(['wget', url, '-O',outdir + filename], '-nv')
+                    subprocess.run(['wget', url, '-O',outdir + filename, '-nv'])
                 else:
                     print('Updating existing scheme')
                     os.remove(outdir + filename)
