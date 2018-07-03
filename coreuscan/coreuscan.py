@@ -589,7 +589,7 @@ def download_cgmlst(species, scheme_type, outpath = False, scheme_path = False, 
             if species.lower() in sp.lower():
 
                 url = scheme[1]
-                print(url)
+                # print(url)
                 filename = species.split()[0] + '.gz'
                 print(outdir + filename)
                 if not os.path.exists(outdir +  filename):
@@ -723,7 +723,7 @@ def main():
 
     if args.db != None:
         db = args.db
-        print(db)
+        # print(db)
     else:
         db = False
 
@@ -753,7 +753,7 @@ def main():
         # if there is a species added
         if args.species != None:
             species = args.species
-            print(species)
+            # print(species)
             # search for a the species and db
             if db == False:
                 if species == 'listeria': # set default of listeria to pasteur although it can also be downloaded from cgmlst if db = cgmlst
@@ -764,7 +764,7 @@ def main():
 
             else:
                 species = find_db(species=species, type=schema_type)[0]
-            print(db)
+            # print(db)
 
             if args.outpath != None:
                 outpath = args.outpath
