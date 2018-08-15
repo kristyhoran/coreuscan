@@ -85,5 +85,5 @@ A ecoli Core Genome was found as ecoli in Enterobase
 ## Download a scheme
 
 ``` bash
-coreuscan.py -d -s listeria -st cg -db Pasteur -o path_for_scheme
+coreuscan.py -d -sp listeria -st cg -db Pasteur -o path_for_scheme
 ```
